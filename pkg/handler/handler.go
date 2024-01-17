@@ -19,7 +19,8 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 	auth := router.Group("/auth")
 	{
-		auth.POST("/sign-up", h.create_user)
+		// Метод для добавления новых людей в формате
+		auth.POST("/add", h.create_user)
 	}
 
 	return router
