@@ -2,6 +2,7 @@ package service
 
 import (
 	"EMtest/models"
+	helpers "EMtest/pkg/handler/helper"
 	"EMtest/pkg/repository"
 	"log"
 )
@@ -15,7 +16,7 @@ func NewUserService(repo repository.UserRepo) *User_service {
 }
 
 func (s *User_service) CreateUser(user models.User) (int, error) {
-	//TODO: апи доп инфа
+	//Здесь можно добавить валидацию user
 
 	//Запрашиваем вероятную национальность
 	country, err := GetCountry(user.Name)
@@ -45,4 +46,22 @@ func (s *User_service) CreateUser(user models.User) (int, error) {
 	user.Gender = sex
 
 	return s.repo.CreateUser(user)
+}
+
+func (s *User_service) GetAllUsers(limit int, offset int) (int, []models.User, error) {
+
+	return s.repo.GetAllUsers(limit, offset)
+
+}
+
+func (s *User_service) GetCertainUsers(limit int, offset int, filter helpers.FilterData) (int, []models.User, error) {
+
+	//Здесь можно добавить валидацию filter
+
+	return s.repo.GetCertainUsers(limit, offset, filter)
+}
+
+func (s *User_service) DeleteUser(userId int) error {
+
+	return s.repo.DeleteUser(userId)
 }
