@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
 type ResponseAgify struct {
@@ -32,6 +34,6 @@ func GetAge(name string) (int, error) {
 		return -1, err
 	}
 
-	fmt.Printf("Got response with Age: %d\n", response.Age)
+	logrus.Info(fmt.Sprintf("Got response with Age: %d\n", response.Age))
 	return response.Age, nil
 }

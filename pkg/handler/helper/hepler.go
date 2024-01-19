@@ -7,7 +7,7 @@ type PaginationData struct {
 	TotalPages int
 }
 
-type FilterData struct {
+type UserData struct {
 	Name       string
 	Surname    string
 	Patronymic string

@@ -28,7 +28,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		// Метод для получения данных с различными фильтрами и пагинацией
 		auth.GET("/page/:page", h.get_all_users)
 		// Метод для изменения сущности
-		auth.POST("/edit/:id")
+		auth.POST("/edit/:id", h.update_user_by_id)
 		// Метод для удаления сущности
 		auth.DELETE("/delete/:id", h.delete_user_by_id)
 

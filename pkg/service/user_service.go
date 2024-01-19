@@ -54,9 +54,9 @@ func (s *User_service) GetAllUsers(limit int, offset int) (int, []models.User, e
 
 }
 
-func (s *User_service) GetCertainUsers(limit int, offset int, filter helpers.FilterData) (int, []models.User, error) {
+func (s *User_service) GetCertainUsers(limit int, offset int, filter map[string]string) (int, []models.User, error) {
 
-	//Здесь можно добавить валидацию filter
+	//Добавить валидацию filter?
 
 	return s.repo.GetCertainUsers(limit, offset, filter)
 }
@@ -64,4 +64,10 @@ func (s *User_service) GetCertainUsers(limit int, offset int, filter helpers.Fil
 func (s *User_service) DeleteUser(userId int) error {
 
 	return s.repo.DeleteUser(userId)
+}
+
+func (s *User_service) UpdateUser(userId int, user helpers.UserData) error {
+	//Проверяем, есть ли юзер с таким Id в бд
+	return s.repo.UpdateUser(userId, user)
+	//Если такого нет, то создаём нового
 }

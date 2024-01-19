@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Country struct {
@@ -56,6 +58,6 @@ func findMaxProbCountry(countries []Country) *Country {
 		}
 	}
 
-	fmt.Printf("Got response with ID of the country with the highest probability: %s\n", maxProbCountry.CountryID)
+	logrus.Info(fmt.Sprintf("Got response with ID of the country with the highest probability: %s\n", maxProbCountry.CountryID))
 	return maxProbCountry
 }

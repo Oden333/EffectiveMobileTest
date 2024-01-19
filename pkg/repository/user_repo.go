@@ -4,6 +4,7 @@ import (
 	"EMtest/models"
 	helpers "EMtest/pkg/handler/helper"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
@@ -31,6 +32,70 @@ func (r *User_repo) CreateUser(user models.User) (int, error) {
 	}
 	return id, nil
 }
+
+func (r *User_repo) UpdateUser(userId int, user helpers.UserData) error {
+	//TODO: Добавить проверку существования ID в БД
+
+	setValues := make([]string, 0)
+	args := make([]interface{}, 0)
+	argId := 1
+
+	if user.Name != "" {
+		setValues = append(setValues, fmt.Sprintf("name=$%d", argId))
+		args = append(args, *&user.Name)
+		argId++
+	}
+
+	if user.Surname != "" {
+		setValues = append(setValues, fmt.Sprintf("surname=$%d", argId))
+		args = append(args, *&user.Surname)
+		argId++
+	}
+
+	if user.Patronymic != "" {
+		setValues = append(setValues, fmt.Sprintf("patronymic=$%d", argId))
+		args = append(args, *&user.Patronymic)
+		argId++
+	}
+
+	if user.Age != "" {
+		setValues = append(setValues, fmt.Sprintf("age=$%d", argId))
+		args = append(args, *&user.Age)
+		argId++
+	}
+
+	if user.Gender != "" {
+		setValues = append(setValues, fmt.Sprintf("gender=$%d", argId))
+		args = append(args, *&user.Gender)
+		argId++
+	}
+
+	if user.Country != "" {
+		setValues = append(setValues, fmt.Sprintf("country=$%d", argId))
+		args = append(args, *&user.Country)
+		argId++
+	}
+
+	// name=$1
+	// в нужном порядке добавляем аргументы
+	// surname=$_
+	setQuery := strings.Join(setValues, ", ")
+
+	//Формируем безопастный SQL запрос в бд
+	query := fmt.Sprintf(`UPDATE %s SET %s WHERE id = $%d`, usersTable, setQuery, argId)
+
+	args = append(args, userId)
+
+	logrus.Debugf("updateQuery: %s", query)
+	logrus.Debugf("args: %s", args)
+
+	//Выполняем запрос
+	_, err := r.db.Exec(query, args...)
+
+	return err
+
+}
+
 func (r *User_repo) GetAllUsers(limit int, offset int) (int, []models.User, error) {
 
 	//Узнаём общее кол-во человек (для настроек странциы)
@@ -54,7 +119,7 @@ func (r *User_repo) GetAllUsers(limit int, offset int) (int, []models.User, erro
 	return count, users, nil
 }
 
-func (r *User_repo) GetCertainUsers(limit int, offset int, filter helpers.FilterData) (int, []models.User, error) {
+func (r *User_repo) GetCertainUsers(limit int, offset int, filter map[string]string) (int, []models.User, error) {
 
 	// Базовый запрос
 	// 1=1 для более удобного формирования конструкции с фильтром
@@ -63,21 +128,11 @@ func (r *User_repo) GetCertainUsers(limit int, offset int, filter helpers.Filter
         WHERE 1=1
     `
 	//Узнаём, какие фильтры будут добавляться и формируем запрос в бд
-	if filter.Age != "" {
-		query += " AND age = " + filter.Age
+	for key, value := range filter {
+		query += fmt.Sprintf(" AND %s = '%s'", key, value)
 	}
-	if filter.Name != "" {
-		query += " AND name = '" + filter.Name + "'"
-	}
-	if filter.Surname != "" {
-		query += " AND surname = '" + filter.Surname + "'"
-	}
-	if filter.Patronymic != "" {
-		query += " AND patronymic = '" + filter.Patronymic + "'"
-	}
-	if filter.Country != "" {
-		query += " AND country = '" + filter.Country + "'"
-	}
+
+	fmt.Println(query)
 
 	// Так же добавим лимит и оффсет для пагинации страниц
 	query += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
@@ -103,6 +158,10 @@ func (r *User_repo) GetCertainUsers(limit int, offset int, filter helpers.Filter
 func (r *User_repo) DeleteUser(userId int) error {
 
 	_, err := r.db.Exec("DELETE FROM users WHERE id = $1", userId)
+	//В бд ID удаляется, но список остаётся без смещения
+	// ID	Name ...
+	// 11	ivan ...
+	// 13	john ...
 	if err != nil {
 		logrus.Debug("Error deleting User by Id", err)
 

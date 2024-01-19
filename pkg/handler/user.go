@@ -3,6 +3,7 @@ package handler
 import (
 	"EMtest/models"
 	helpers "EMtest/pkg/handler/helper"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -25,7 +26,7 @@ func (h *Handler) create_user(c *gin.Context) {
 	if input.Patronymic == "" {
 		input.Patronymic = "-"
 	}
-	logrus.Info("Got request", "User", input)
+	logrus.Info("Got request creating", "User", input)
 
 	id, err := h.services.UserService.CreateUser(input)
 	if err != nil {
@@ -48,24 +49,25 @@ func (h *Handler) get_all_users(c *gin.Context) {
 		page, _ = strconv.Atoi(pageNum)
 	}
 	//Узнаём параметры для страницы
+
 	limit := 5
 	offset := (page - 1) * limit
 
 	// Получаем параметры фильтрации из запроса
-	filter := helpers.FilterData{
-		Name:       c.DefaultQuery("name", ""),    // ?name=John
-		Surname:    c.DefaultQuery("surname", ""), // ?surname=Wick
-		Patronymic: c.DefaultQuery("patronymic", ""),
-		Age:        c.DefaultQuery("age", ""), // ?age=12
-		Gender:     c.DefaultQuery("gender", ""),
-		Country:    c.DefaultQuery("country", ""), // ?country=USA
+	queryParamsData := []string{"name", "surname", "patronymic", "age", "gender", "country"}
+	filters := map[string]string{}
+	for _, param := range queryParamsData {
+		filter := c.Query(param)
+		if filter != "" {
+			filters[param] = filter
+		}
 	}
+	fmt.Println(page, pageNum, offset)
 
-	//
 	var count int
 	var people []models.User
 	var err error
-	if filter.Name == "" && filter.Surname == "" && filter.Patronymic == "" && filter.Age == "" && filter.Gender == "" && filter.Country == "" {
+	if len(filters) == 0 {
 
 		//Достаём людей, в случае отсутствия фильтров
 		count, people, err = h.services.GetAllUsers(limit, offset)
@@ -79,7 +81,7 @@ func (h *Handler) get_all_users(c *gin.Context) {
 		logrus.Info("Got filtered request")
 
 		//Достаём необходимых людей по фильтру
-		count, people, err = h.services.GetCertainUsers(limit, offset, filter)
+		count, people, err = h.services.GetCertainUsers(limit, offset, filters)
 		if err != nil {
 			logrus.Debug("Error while requesting all users from DB", err)
 			newErrorResponse(c, http.StatusInternalServerError, err.Error())
@@ -118,6 +120,32 @@ func (h *Handler) delete_user_by_id(c *gin.Context) {
 
 	err = h.services.DeleteUser(id)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, "error while deleting")
+		newErrorResponse(c, http.StatusInternalServerError, "error while deleting user")
 	}
+}
+
+func (h *Handler) update_user_by_id(c *gin.Context) {
+	//ID изменяемого пользвателя из урла
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		return
+	}
+
+	// Json Данные запроса для изменения
+	var input helpers.UserData
+	if err := c.BindJSON(&input); err != nil {
+		logrus.Debug("error while unmarshalling request", err)
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Передаём в сервис
+	err = h.services.UserService.UpdateUser(id, input)
+	if err != nil {
+		logrus.Debug("error while editing user", err)
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 }

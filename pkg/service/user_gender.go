@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
 type ResponseGenderize struct {
@@ -32,6 +34,6 @@ func GetGender(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("Got response with Gender: %s\n", response.Gender)
+	logrus.Info(fmt.Sprintf("Got response with Gender: %s\n", response.Gender))
 	return response.Gender, nil
 }
